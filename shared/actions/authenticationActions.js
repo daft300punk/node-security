@@ -4,7 +4,7 @@ import * as types from "../constants/actionTypes";
 import authenticationApi from "../api-services/authenticationApi";
 import { routerActions } from "react-router-redux;
 
-function userDateUpdate(user) {
+function userDataUpdate(user) {
   return {
     type: types.USERDATE_UPDATED,
     user
@@ -85,3 +85,48 @@ function userRegistrationFailure(errors) {
   }
 }
 
+export function login(creds, returnUrl) {
+  return dispatch => {
+    dispatch(userAuthenticationRequested());
+    authenticationApi.login(creds)
+      .then(user => {
+        dispatch(userAuthenticationSuccess(user));
+        dispatch(userDataUpdate(user));
+        dispatch(routerActions.push(returnUrl || "/"));
+      })
+      .catch(error => {
+        dispatch(userAuthenticationFailure(error.data));
+      });
+  }
+}
+
+export function logout() {
+  return dispatch => {
+    dispatch(userLogoutRequested());
+
+    authenticationApi.logout()
+      .then(() => {
+        dispatch(userLogoutSuccessful());
+        dispatch(userDataUpdate({}));
+        dispatch(routerActions.push("/"));
+      })
+      .catch(error => {
+        dispatch(userLogoutFailure(error));
+      });
+  }
+}
+
+export function register(user) {
+  return dispatch => {
+    dispatch(userRegistrationRequested());
+
+    return authenticationApi.register(user)
+      .then(function(message) {
+        dispatch(userRegistrationSuccess(message));
+        dispatch(routerActions.push("/login"));
+      })
+      .catch(function(errors) {
+        dispatch(userRegistrationFailure(errors));
+      })
+  }
+}
